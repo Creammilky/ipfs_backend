@@ -30,7 +30,7 @@ def register():
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('index_log'))
 
     if request.method == 'POST':
         username = request.form.get('username')
@@ -39,7 +39,7 @@ def login():
         if user and user.check_password(password):
             login_user(user, remember=True)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('index'))
+            return redirect(next_page or url_for('index_log'))
         else:
             flash('Invalid username or password')
     return render_template('login.html')
