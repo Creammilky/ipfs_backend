@@ -32,3 +32,15 @@ class Group(db.Model):
     name = db.Column(db.String(64), unique=True, nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     members = db.relationship('User', secondary=user_groups, backref=db.backref('groups', lazy='dynamic'))
+
+class IPFSFile(db.Model):
+    __tablename__ = 'ipfs_files'
+    id = db.Column(db.Integer, primary_key=True)
+    cid = db.Column(db.String(128), unique=True, nullable=False)  # IPFS中的唯一hash
+    filename = db.Column(db.String(128), nullable=False)  # 文件名
+    uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # 上传者ID
+    access_type = db.Column(db.String(10), nullable=False)  # 访问权限类型，'user' 或 'group'
+    access_id = db.Column(db.Integer, nullable=False)  # 根据access_type，这可以是用户ID或组ID
+    description = db.Column(db.String(512))  # 文件描述
+
+    uploader = db.relationship('User', backref=db.backref('uploaded_files', lazy=True))
