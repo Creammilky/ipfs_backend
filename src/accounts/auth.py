@@ -1,4 +1,4 @@
-from flask import Blueprint, request, redirect, render_template, url_for, flash
+from flask import Blueprint, request, redirect, render_template, url_for, flash, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from .user import User, db, Group
 from werkzeug.security import check_password_hash
@@ -32,7 +32,6 @@ def register():
         return redirect(url_for('index'))
 
     return render_template('register.html')
-
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
