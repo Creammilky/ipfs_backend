@@ -2,9 +2,9 @@ from flask import Flask, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, current_user, login_required
-from user.config import Config
-from user.models import db, User
-from user.auth import auth_blueprint
+from accounts.config import Config
+from accounts.user import db, User
+from accounts.auth import auth_blueprint
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here___'
