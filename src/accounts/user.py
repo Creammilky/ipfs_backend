@@ -17,7 +17,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     hashed_password = db.Column(db.String(128))
     public_key = db.Column(db.String(512))
-    # groups relationship will be added after Group class definition
+    # 不需要在这里添加groups关系，将通过Group模型中的backref自动添加
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)
@@ -32,6 +32,3 @@ class Group(db.Model):
     name = db.Column(db.String(64), unique=True, nullable=False)
     owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     members = db.relationship('User', secondary=user_groups, backref=db.backref('groups', lazy='dynamic'))
-
-# 添加User模型和Group模型之间的关系
-User.groups = db.relationship('Group', secondary=user_groups, backref=db.backref('users', lazy=True))
