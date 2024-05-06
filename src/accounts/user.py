@@ -42,5 +42,6 @@ class IPFSFile(db.Model):
     access_type = db.Column(db.String(10), nullable=False)  # 访问权限类型，'user' 或 'group'
     access_id = db.Column(db.Integer, nullable=False)  # 根据access_type，这可以是用户ID或组ID
     description = db.Column(db.String(512))  # 文件描述
+    encrypted_key = db.Column(db.String(512))  # 加密的对称密钥
 
     uploader = db.relationship('User', backref=db.backref('uploaded_files', lazy=True))

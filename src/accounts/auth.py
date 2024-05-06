@@ -1,6 +1,6 @@
 from flask import Blueprint, request, redirect, render_template, url_for, flash, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
-from .user import User, db, Group
+from .user import User, db, Group, IPFSFile
 from werkzeug.security import check_password_hash
 
 
@@ -73,3 +73,17 @@ def leave_group(user_id, group_id):
     if group in user.groups:
         user.groups.remove(group)
         db.session.commit()
+
+
+def upload_file_to_ipfs(user_id, cid, filename, description, access_type, access_id, encrypted_key):
+    new_file = IPFSFile(
+        uploader_id=user_id,
+        cid=cid,
+        filename=filename,
+        description=description,
+        access_type=access_type,
+        access_id=access_id,
+        encrypted_key=encrypted_key
+    )
+    db.session.add(new_file)
+    db.session.commit()
