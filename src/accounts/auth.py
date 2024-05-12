@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from .user import User, db, Group, IPFSFile
 from werkzeug.security import check_password_hash
 
-from ..cypher.interfaces import decrypt,encrypt
+from src.cypher.interfaces import decrypt,encrypt
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -100,18 +100,22 @@ def leave_group(username, groupname):
 
 
 def upload_file_to_ipfs(username, cid, filename, description, access_type, access_id, encrypted_key):
-    user_id = User.query.filter_by(username=username).first()
-    new_file = IPFSFile(
-        uploader_id=user_id,
-        cid=cid,
-        filename=filename,
-        description=description,
-        access_type=access_type,
-        access_id=access_id,
-        encrypted_key=encrypted_key
-    )
-    db.session.add(new_file)
-    db.session.commit()
+    try:
+        user_id = User.query.filter_by(username=username).first()
+        new_file = IPFSFile(
+            uploader_id=user_id,
+            cid=cid,
+            filename=filename,
+            description=description,
+            access_type=access_type,
+            access_id=access_id,
+            encrypted_key=encrypted_key
+        )
+        db.session.add(new_file)
+        db.session.commit()
+        return (None, 200)
+    except Exception as e:
+        return (str(e), 400)
 
 
 def check_permission(user, ipfs_file):
@@ -141,19 +145,19 @@ def download_file_from_ipfs(username, cid):
     server_prikey = "../../pem/private_key.pem"
     user = User.query.filter_by(username=username).first()
     if not user:
-        return False  # 用户不存在
+        return (None, 404)  # 用户不存在
 
     # 获取文件实例
     ipfs_file = IPFSFile.query.filter_by(cid=cid).first()
     if not ipfs_file:
-        return False  # 文件不存在
+        return (None, 404)  # 文件不存在
 
     if check_permission(user, ipfs_file):
         ipfs_file_encrypted_key = ipfs_file.encrypted_key
         ipfs_file_key = decrypt(ipfs_file_encrypted_key, server_prikey)
         user_pubkey = user.public_key
         ipfs_file_encrypted_key2 = encrypt(ipfs_file_key, user_pubkey)
-        return ipfs_file_encrypted_key2
+        return (ipfs_file_encrypted_key2, 200)
     else:
         print("没有权限下载该文件")
-        return None
+        return (None ,403)
