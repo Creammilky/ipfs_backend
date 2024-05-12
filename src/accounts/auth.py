@@ -138,6 +138,7 @@ def check_permission(user, ipfs_file):
 
 def download_file_from_ipfs(username, cid):
     # 获取用户实例
+    server_prikey = "../../pem/private_key.pem"
     user = User.query.filter_by(username=username).first()
     if not user:
         return False  # 用户不存在
