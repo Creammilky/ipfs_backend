@@ -60,6 +60,7 @@ def logout():
     return redirect(url_for('index'))
 
 
+
 def create_group(name, owner_id):
     new_group = Group(name=name, owner_id=owner_id)
     db.session.add(new_group)

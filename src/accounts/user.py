@@ -10,6 +10,7 @@ user_groups = db.Table('user_groups',
     db.Column('group_id', db.Integer, db.ForeignKey('groups.id'), primary_key=True)
 )
 
+
 # 定义User模型
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -24,6 +25,7 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.hashed_password, password)
+
 
 # 定义Group模型
 class Group(db.Model):

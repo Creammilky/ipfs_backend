@@ -28,6 +28,7 @@ app.register_blueprint(auth_blueprint, url_prefix='/auth')
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# 下面的弃用
 @app.route('/')
 def index():
     if current_user.is_authenticated:
@@ -46,11 +47,11 @@ def signin():
 @app.route('/sign-up', methods=['GET', 'POST'])
 def signup():
     return render_template('register.html')
+# 上面的弃用
+
 
 @app.route('/sign-up-client', methods=['POST'])
 def sign_up_client():
-    if current_user.is_authenticated:
-        return jsonify({'message': 'User already logged in'}), 400
 
     data = json.loads(request.get_json())  # 获取POST的JSON数据
     if not data:
@@ -73,9 +74,43 @@ def sign_up_client():
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
-
-    login_user(new_user)
     return jsonify({'message': 'User successfully registered'}), 201
+
+
+@app.route('/sign-in-client', methods=['POST'])
+def sign_up_client():
+    if current_user.is_authenticated:
+        return jsonify({'message': 'User already logged in'}), 400
+
+    data = json.loads(request.get_json())  # 获取POST的JSON数据
+    if not data:
+        return jsonify({'message': 'No data provided'}), 400
+
+    username = data.get('username')
+    password = data.get('password')
+
+    if not username or not password:
+        return jsonify({'message': 'Missing username, password, or public key'}), 400
+
+    if User.query.filter_by(username=username).first():
+        return jsonify({'message': 'Username already exists'}), 409
+
+    user = User.query.filter_by(username=username).first()
+    if user and user.check_password(password):
+        login_user(user, remember=True)
+        return jsonify({'message': 'User successfully registered'}), 201
+
+    else:
+        return jsonify({'message': 'Incorrect password.'}), 401
+
+@app.route('/test-login-state', methods=['GET'])
+def test_login_state():
+    if current_user.is_authenticated:
+        return 'You are logged in!'
+    else:
+        return 'You are not logged in!'
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
