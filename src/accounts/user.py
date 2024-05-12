@@ -40,8 +40,10 @@ class IPFSFile(db.Model):
     filename = db.Column(db.String(128), nullable=False)  # 文件名
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # 上传者ID
     access_type = db.Column(db.String(10), nullable=False)  # 访问权限类型，'user' 或 'group'
-    access_id = db.Column(db.Integer, nullable=False)  # 根据access_type，这可以是用户ID或组ID
+    # 存储多个访问ID
+    access_ids = db.Column(db.PickleType, nullable=False)  # 使用PickleType来存储列表
     description = db.Column(db.String(512))  # 文件描述
     encrypted_key = db.Column(db.String(512))  # 加密的对称密钥
 
     uploader = db.relationship('User', backref=db.backref('uploaded_files', lazy=True))
+

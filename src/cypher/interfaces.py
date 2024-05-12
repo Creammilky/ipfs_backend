@@ -13,7 +13,18 @@ from cryptography.fernet import Fernet
 
 
 # user file enc
-def encrypt(filename, key):
+
+def encrypt(plain_text,key):
+    cipher = Fernet(key)
+    cipher_text = cipher.encrypt(plain_text)
+    return cipher_text
+
+def decrypt(cipher_text,key):
+    cipher = Fernet(key)
+    plain_text = cipher.decrypt(cipher_text)
+    return plain_text
+
+def encrypt_from_file(filename, key):
     fernet = Fernet(key)
     with open(filename, 'rb') as file:
         original = file.read()
@@ -23,7 +34,7 @@ def encrypt(filename, key):
 
 
 # user file dec
-def decrypt(filename, key):
+def decrypt_from_file(filename, key):
     fernet = Fernet(key)
     with open(filename, 'rb') as enc_file:
         encrypted = enc_file.read()
