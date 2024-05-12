@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, current_user, login_required, login_user
 from accounts.config import Config
 from accounts.user import db, User
-from accounts.auth import auth_blueprint
+from src.accounts.auth import auth_blueprint
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here___'
@@ -78,7 +78,7 @@ def sign_up_client():
 
 
 @app.route('/sign-in-client', methods=['POST'])
-def sign_up_client():
+def sign_in_client():
     if current_user.is_authenticated:
         return jsonify({'message': 'User already logged in'}), 400
 

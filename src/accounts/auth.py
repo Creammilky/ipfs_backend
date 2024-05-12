@@ -7,7 +7,6 @@ from ..cypher.interfaces import decrypt,encrypt
 
 auth_blueprint = Blueprint('auth', __name__)
 
-
 @auth_blueprint.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -34,7 +33,6 @@ def register():
         return redirect(url_for('index'))
 
     return render_template('register.html')
-
 
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
 def login():
@@ -120,23 +118,23 @@ def check_permission(user, ipfs_file):
     return False  # 默认情况下，没有权限
 
 
-def download_file_from_ipfs(username, cid):
-    # 获取用户实例
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        return False  # 用户不存在
-
-    # 获取文件实例
-    ipfs_file = IPFSFile.query.filter_by(cid=cid).first()
-    if not ipfs_file:
-        return False  # 文件不存在
-
-    if check_permission(user, ipfs_file):
-        ipfs_file_encrypted_key = ipfs_file.encrypted_key
-        ipfs_file_key = decrypt(ipfs_file_encrypted_key, server_prikey)
-        user_pubkey = user.public_key
-        ipfs_file_encrypted_key2 = encrypt(ipfs_file_key, user_pubkey)
-        return ipfs_file_encrypted_key2
-    else:
-        print("没有权限下载该文件")
-        return None
+# def download_file_from_ipfs(username, cid):
+#     # 获取用户实例
+#     user = User.query.filter_by(username=username).first()
+#     if not user:
+#         return False  # 用户不存在
+#
+#     # 获取文件实例
+#     ipfs_file = IPFSFile.query.filter_by(cid=cid).first()
+#     if not ipfs_file:
+#         return False  # 文件不存在
+#
+#     if check_permission(user, ipfs_file):
+#         ipfs_file_encrypted_key = ipfs_file.encrypted_key
+#         ipfs_file_key = decrypt(ipfs_file_encrypted_key, server_prikey)
+#         user_pubkey = user.public_key
+#         ipfs_file_encrypted_key2 = encrypt(ipfs_file_key, user_pubkey)
+#         return ipfs_file_encrypted_key2
+#     else:
+#         print("没有权限下载该文件")
+#         return None
