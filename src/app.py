@@ -92,9 +92,6 @@ def sign_in_client():
     if not username or not password:
         return jsonify({'message': 'Missing username, password, or public key'}), 400
 
-    if User.query.filter_by(username=username).first():
-        return jsonify({'message': 'Username already exists'}), 409
-
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
         login_user(user, remember=True)
