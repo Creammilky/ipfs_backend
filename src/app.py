@@ -3,7 +3,7 @@ import json
 from flask import Flask, render_template, redirect, url_for, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager, current_user, login_required, login_user
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from accounts.config import Config
 from accounts.user import db, User
 from src.accounts.auth import auth_blueprint
@@ -103,12 +103,20 @@ def sign_in_client():
     else:
         return jsonify({'message': 'Incorrect password.'}), 401
 
+
 @app.route('/test-login-state', methods=['GET'])
 def test_login_state():
     if current_user.is_authenticated:
-        return 'You are logged in!'
+        return 'You are logged in as {}!'.format(current_user.username)
     else:
         return 'You are not logged in!'
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return 'You are now logged out!'
 
 
 
