@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from accounts.config import Config
 from accounts.user import db, User
-from src.accounts.auth import auth_blueprint
+from accounts.auth import auth_blueprint
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here___'
@@ -76,7 +76,6 @@ def sign_up_client():
     db.session.commit()
     return jsonify({'message': 'User successfully registered'}), 201
 
-
 @app.route('/sign-in-client', methods=['POST'])
 def sign_in_client():
     if current_user.is_authenticated:
@@ -90,13 +89,12 @@ def sign_in_client():
     password = data.get('password')
 
     if not username or not password:
-        return jsonify({'message': 'Missing username, password, or public key'}), 400
+        return jsonify({'message': 'Missing username or password'}), 400
 
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
-        login_user(user, remember=True)
-        return jsonify({'message': 'User successfully registered'}), 201
-
+        login_user(user, remember=True)  # 设置remember=True来持久化cookie
+        return jsonify({'message': 'User successfully logged in'}), 200
     else:
         return jsonify({'message': 'Incorrect password.'}), 401
 

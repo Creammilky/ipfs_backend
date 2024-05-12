@@ -1,5 +1,7 @@
 from flask import Blueprint, request, redirect, render_template, url_for, flash, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
+from sqlalchemy.exc import SQLAlchemyError
+
 from .user import User, db, Group, IPFSFile
 from werkzeug.security import check_password_hash
 
@@ -58,27 +60,43 @@ def logout():
     return redirect(url_for('index'))
 
 
-
-def create_group(name, owner_id):
-    new_group = Group(name=name, owner_id=owner_id)
-    db.session.add(new_group)
-    db.session.commit()
-
-
-def join_group(user_id, group_id):
-    user = User.query.get(user_id)
-    group = Group.query.get(group_id)
-    if group not in user.groups:
-        user.groups.append(group)
+def create_group(groupname, username):
+    try:
+        user_id = User.query.filter_by(username=username).first().id
+        new_group = Group(name=groupname, owner_id=user_id)
+        db.session.add(new_group)
         db.session.commit()
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        raise  # 或者根据需要处理异常
 
+# 加入组
+def join_group(username, groupname):
+    try:
+        user = User.query.filter_by(username=username).first()
+        group = Group.query.filter_by(name=groupname).first()
+        if group and user and group not in user.groups:
+            user.groups.append(group)
+            db.session.commit()
+        else:
+            raise ValueError("Group or user not found or user is already in the group.")
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        raise  # 或者根据需要处理异常
 
-def leave_group(user_id, group_id):
-    user = User.query.get(user_id)
-    group = Group.query.get(group_id)
-    if group in user.groups:
-        user.groups.remove(group)
-        db.session.commit()
+# 离开组
+def leave_group(username, groupname):
+    try:
+        user = User.query.filter_by(username=username).first()
+        group = Group.query.filter_by(name=groupname).first()
+        if group and user and group in user.groups and user.id != group.owner_id:
+            user.groups.remove(group)
+            db.session.commit()
+        else:
+            raise ValueError("Group or user not found or user is not in the group or user is the owner.")
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        raise  # 或者根据需要处理异常
 
 
 def upload_file_to_ipfs(username, cid, filename, description, access_type, access_id, encrypted_key):
@@ -118,23 +136,23 @@ def check_permission(user, ipfs_file):
     return False  # 默认情况下，没有权限
 
 
-# def download_file_from_ipfs(username, cid):
-#     # 获取用户实例
-#     user = User.query.filter_by(username=username).first()
-#     if not user:
-#         return False  # 用户不存在
-#
-#     # 获取文件实例
-#     ipfs_file = IPFSFile.query.filter_by(cid=cid).first()
-#     if not ipfs_file:
-#         return False  # 文件不存在
-#
-#     if check_permission(user, ipfs_file):
-#         ipfs_file_encrypted_key = ipfs_file.encrypted_key
-#         ipfs_file_key = decrypt(ipfs_file_encrypted_key, server_prikey)
-#         user_pubkey = user.public_key
-#         ipfs_file_encrypted_key2 = encrypt(ipfs_file_key, user_pubkey)
-#         return ipfs_file_encrypted_key2
-#     else:
-#         print("没有权限下载该文件")
-#         return None
+def download_file_from_ipfs(username, cid):
+    # 获取用户实例
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return False  # 用户不存在
+
+    # 获取文件实例
+    ipfs_file = IPFSFile.query.filter_by(cid=cid).first()
+    if not ipfs_file:
+        return False  # 文件不存在
+
+    if check_permission(user, ipfs_file):
+        ipfs_file_encrypted_key = ipfs_file.encrypted_key
+        ipfs_file_key = decrypt(ipfs_file_encrypted_key, server_prikey)
+        user_pubkey = user.public_key
+        ipfs_file_encrypted_key2 = encrypt(ipfs_file_key, user_pubkey)
+        return ipfs_file_encrypted_key2
+    else:
+        print("没有权限下载该文件")
+        return None
