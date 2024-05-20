@@ -124,12 +124,12 @@ def upload_file():
     filename = data.get('filename')
     description = data.get('description')
     access_type = data.get('access_type')
-    access_id = data.get('access_id')
+    access_ids = data.get('access_ids')
     encrypted_key = data.get('encrypted_key')
 
     # 调用函数处理数据
     try:
-        exception, response = upload_file_to_ipfs(username, cid, filename, description, access_type, access_id, encrypted_key)
+        exception, response = upload_file_to_ipfs(username, cid, filename, description, access_type, access_ids, encrypted_key)
     except Exception as e:
         return jsonify({'message': 'File uploaded failed'}), 401
 
@@ -151,7 +151,7 @@ def download_file():
     try:
         ipfs_file_encrypted_key, response = download_file_from_ipfs(username, cid)
     except Exception as e:
-        return jsonify({'message': 'File download failed'}), 401
+        return jsonify({'message': f'File download failed by {e}'}), 401
     # 返回响应
     if response != 200:
         return jsonify({'message': 'File download failed'}), response

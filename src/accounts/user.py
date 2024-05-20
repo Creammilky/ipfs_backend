@@ -11,7 +11,7 @@ user_groups = db.Table('user_groups',
 )
 
 # 定义User模型
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -39,9 +39,9 @@ class IPFSFile(db.Model):
     cid = db.Column(db.String(128), unique=True, nullable=False)  # IPFS中的唯一hash
     filename = db.Column(db.String(128), nullable=False)  # 文件名
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # 上传者ID
-    access_type = db.Column(db.String(10), nullable=False)  # 访问权限类型，'user' 或 'group'
+    access_type = db.Column(db.String(10), nullable=True)  # 访问权限类型，'user' 或 'group'
     # 存储多个访问ID
-    access_ids = db.Column(db.PickleType, nullable=False)  # 使用PickleType来存储列表
+    access_ids = db.Column(db.PickleType, nullable=True)  # 使用PickleType来存储列表
     description = db.Column(db.String(512))  # 文件描述
     encrypted_key = db.Column(db.String(512))  # 加密的对称密钥
 
