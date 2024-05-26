@@ -4,13 +4,14 @@ Date: 2024-05-04 13:22:45
 LastEditors: Carl Tan
 LastEditTime: 2024-05-04 14:51:01
 '''
+import base64
 import os
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.fernet import Fernet
-import base64
+
 
 # user file enc
 
@@ -18,6 +19,7 @@ def encrypt(plain_text,key):
     cipher = Fernet(key)
     cipher_text = cipher.encrypt(plain_text)
     return cipher_text
+
 
 def decrypt(cipher_text, key):
     # 确保key是bytes类型，如果是str则将其转换为bytes
@@ -46,7 +48,7 @@ def decrypt(cipher_text, key):
     except (ValueError, base64.binascii.Error) as e:
         raise ValueError("Invalid key or cipher text: {}".format(e))
 
-def encrypt_from_file(filename, key):
+def aes_encrypt_file(filename, key):
     fernet = Fernet(key)
     with open(filename, 'rb') as file:
         original = file.read()
@@ -56,7 +58,7 @@ def encrypt_from_file(filename, key):
 
 
 # user file dec
-def decrypt_from_file(filename, key):
+def aes_decrypt_file(filename, key):
     fernet = Fernet(key)
     with open(filename, 'rb') as enc_file:
         encrypted = enc_file.read()
@@ -90,7 +92,7 @@ def generate_keys_and_save(file_path):
     return private_key_path, public_key_path
 
 
-def encrypt_message(message, public_key_input, is_plain=False):
+def rsa_public_key_encryption(message, public_key_input, is_plain=False):
     # 根据is_plain标志位读取或转换公钥
     if not is_plain:
         # 如果is_plain为False，从文件路径读取公钥
@@ -113,7 +115,7 @@ def encrypt_message(message, public_key_input, is_plain=False):
     return encrypted
 
 
-def decrypt_message(encrypted_message, private_key_input, is_plain=False):
+def rsa_private_key_decryption(encrypted_message, private_key_input, is_plain=False):
     # 根据is_plain标志位读取或转换私钥
     if not is_plain:
         # 如果is_plain为False，从文件路径读取私钥

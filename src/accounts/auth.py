@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from .user import User, db, Group, IPFSFile
 from werkzeug.security import check_password_hash
 
-from src.cypher.interfaces import *
+from src.cypher.cypher_interfaces import *
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -110,7 +110,7 @@ def upload_file_to_ipfs(username, cid, filename, description, access_type=None, 
             description=description,
             access_type=access_type,
             access_ids=access_ids,
-            encrypted_key=encrypted_key.encode('utf-8')
+            encrypted_key=encrypted_key.encode()
         )
         db.session.add(new_file)
         db.session.commit()
@@ -161,11 +161,10 @@ def download_file_from_ipfs(username, cid):
         return (None, 404)  # 文件不存在
 
     if check_permission(user, ipfs_file):
-
         ipfs_file_encrypted_key = ipfs_file.encrypted_key
-        ipfs_file_key = decrypt_message(ipfs_file_encrypted_key, server_prikey, is_plain=False)
+        ipfs_file_key = rsa_private_key_decryption(ipfs_file_encrypted_key, server_prikey, is_plain=False)
         user_pubkey = user.public_key
-        ipfs_file_encrypted_key2 = encrypt_message(ipfs_file_key, user_pubkey, is_plain=True)
+        ipfs_file_encrypted_key2 = rsa_public_key_encryption(ipfs_file_key, user_pubkey, is_plain=True)
         return (ipfs_file_encrypted_key2, 200)
     else:
         print("没有权限下载该文件")
