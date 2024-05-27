@@ -6,7 +6,8 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from accounts.config import Config
 from accounts.user import db, User
-from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, leave_group
+from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
+    leave_group, user_search
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here___'
@@ -137,6 +138,22 @@ def upload_file():
         return jsonify({'message': f'File uploaded failed caused by {exception}'}), response
     else:
         return jsonify({'message': 'File uploaded successfully'}), response
+
+@app.route('/search-file', methods=['POST'])
+def search_file():
+    data = request.json
+    filename = data.get('filename')
+    username = data.get('username')
+
+    try:
+        results, response = user_search(filename, username)
+        if response == 200:
+            return jsonify(results), 200
+        else:
+            return jsonify({'message': 'File search failed'}), response
+    except Exception as e:
+        return jsonify({'message': f'File search failed: {str(e)}'}), 500
+
 
 @app.route('/download-file', methods=['POST'])
 def download_file():

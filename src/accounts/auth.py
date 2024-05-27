@@ -1,6 +1,9 @@
 from flask import Blueprint, request, redirect, render_template, url_for, flash, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
+from flask import jsonify
+from sqlalchemy import or_
+import traceback
 
 from .user import User, db, Group, IPFSFile
 from werkzeug.security import check_password_hash
@@ -148,6 +151,42 @@ def check_permission(user, ipfs_file):
     return False
 
 
+def user_search(filename, username):
+    server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
+    try:
+        # 查询用户是否存在
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return [], 404  # 如果用户不存在，返回空列表和404错误状态
+
+        search_condition = f"%{filename}%"
+        all_potential_files = IPFSFile.query.filter(
+            or_(
+                IPFSFile.filename.ilike(search_condition),
+            )
+        ).all()
+
+        accessible_files = [file for file in all_potential_files if check_permission(file, user)]
+
+        results = []
+        for file in accessible_files[:5]:  # 只处理前五个结果
+            ipfs_file_key = rsa_private_key_decryption(file.encrypted_key, server_prikey, is_plain=False)
+            user_pubkey = user.public_key
+            ipfs_file_encrypted_key2 = rsa_public_key_encryption(ipfs_file_key, user_pubkey, is_plain=True)
+
+            results.append({
+                'cid': file.cid,
+                'filename': file.filename,
+                'description': file.description,
+                'data_key': ipfs_file_encrypted_key2
+            })
+
+        return results, 200
+    except Exception as e:
+        print(traceback.format_exc())  # 打印异常堆栈信息，可选
+        return [], 500  # 发生异常时返回500错误状态
+
+
 def download_file_from_ipfs(username, cid):
     # 获取用户实例
     server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
@@ -169,3 +208,5 @@ def download_file_from_ipfs(username, cid):
     else:
         print("没有权限下载该文件")
         return (None ,403)
+
+
