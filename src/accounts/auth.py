@@ -1,7 +1,6 @@
 from flask import Blueprint, request, redirect, render_template, url_for, flash, jsonify
 from flask_login import login_user, logout_user, current_user, login_required
 from sqlalchemy.exc import SQLAlchemyError
-from flask import jsonify
 from sqlalchemy import or_
 import traceback
 

@@ -53,13 +53,17 @@ def signup():
 
 @app.route('/sign-up-client', methods=['POST'])
 def sign_up_client():
+    try:
+        data = request.get_json()  # 获取POST的JSON数据
+    except Exception as e:
+        print(e)
 
-    data = json.loads(request.get_json())  # 获取POST的JSON数据
     if not data:
         return jsonify({'message': 'No data provided'}), 400
 
     username = data.get('username')
     password = data.get('password')
+
     public_key = data.get('public_key')  # 从JSON获取公钥
 
     if not username or not password or not public_key:
@@ -82,7 +86,7 @@ def sign_in_client():
     if current_user.is_authenticated:
         return jsonify({'message': 'User already logged in'}), 400
 
-    data = json.loads(request.get_json())  # 获取POST的JSON数据
+    data = request.get_json()  # 获取POST的JSON数据
     if not data:
         return jsonify({'message': 'No data provided'}), 400
 
@@ -139,9 +143,9 @@ def upload_file():
     else:
         return jsonify({'message': 'File uploaded successfully'}), response
 
-@app.route('/search-file', methods=['POST'])
-def search_file():
-    data = request.json
+@app.route('/search-files', methods=['POST'])
+def search_files():
+    data = request.get_json()
     filename = data.get('filename')
     username = data.get('username')
 
