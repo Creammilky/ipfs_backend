@@ -1,9 +1,8 @@
-import json
-
-from flask import Flask, render_template, redirect, url_for, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
+from datetime import timedelta
+from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+
 from accounts.config import Config
 from accounts.user import db, User
 from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
@@ -12,22 +11,14 @@ from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_fro
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here___'
 app.config.from_object(Config)
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this in your production settings
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=3)  # Token expires in one hour
 
 db.init_app(app)
 migrate = Migrate(app, db)
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-
-login_manager.login_view = 'auth.login'
-login_manager.login_message = 'Please log in to access this page.'
-login_manager.login_message_category = 'info'
+jwt = JWTManager(app)
 
 app.register_blueprint(auth_blueprint, url_prefix='/auth')
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 @app.route('/sign-up-client', methods=['POST'])
 def sign_up_client():
@@ -41,7 +32,6 @@ def sign_up_client():
 
     username = data.get('username')
     password = data.get('password')
-
     public_key = data.get('public_key')  # 从JSON获取公钥
 
     if not username or not password or not public_key:
@@ -61,10 +51,7 @@ def sign_up_client():
 
 @app.route('/sign-in-client', methods=['POST'])
 def sign_in_client():
-    if current_user.is_authenticated:
-        return jsonify({'message': 'User already logged in'}), 400
-
-    data = request.get_json()  # 获取POST的JSON数据
+    data = request.get_json()
     if not data:
         return jsonify({'message': 'No data provided'}), 400
 
@@ -76,30 +63,21 @@ def sign_in_client():
 
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
-        login_user(user, remember=True)  # 设置remember=True来持久化cookie
-        return jsonify({'message': 'User successfully logged in'}), 200
+        access_token = create_access_token(identity=username)
+        return jsonify(access_token=access_token), 200
     else:
-        return jsonify({'message': 'Incorrect password.'}), 401
+        return jsonify({'message': 'Invalid credentials'}), 401
 
-
-@app.route('/test-login-state', methods=['GET'])
-def test_login_state():
-    if current_user.is_authenticated:
-        return 'You are logged in as {}!'.format(current_user.username)
-    else:
-        return 'You are not logged in!'
-
-
-@app.route('/logout')
-@login_required
+@app.route('/logout', methods=['POST'])
+@jwt_required()
 def logout():
-    logout_user()
-    return 'You are now logged out!'
+    return 'You are now logged out!', 200
 
 @app.route('/upload-file', methods=['POST'])
+@jwt_required()
 def upload_file():
     # 从请求中获取 JSON 数据
-    data = request.get_json()
+    data = request.json
 
     # 提取 JSON 数据中的参数
     username = data.get('username')
@@ -122,7 +100,7 @@ def upload_file():
         return jsonify({'message': 'File uploaded successfully'}), response
 
 @app.route('/search-files', methods=['POST'])
-
+@jwt_required()
 def search_files():
     data = request.get_json()
     filename = data.get('filename')
@@ -139,6 +117,7 @@ def search_files():
 
 
 @app.route('/download-file', methods=['POST'])
+@jwt_required()
 def download_file():
     # 从请求中获取 JSON 数据
     data = request.json
@@ -160,10 +139,11 @@ def download_file():
 
 # 创建组的路由
 @app.route('/create_group', methods=['POST'])
+@jwt_required()
 def create_group_route():
+    username = get_jwt_identity()
     data = request.get_json()
     groupname = data.get('groupname')
-    username = data.get('username')
     if not groupname or not username:
         return jsonify({'error': 'Missing groupname or username'}), 400
     try:
@@ -174,9 +154,10 @@ def create_group_route():
 
 # 加入组的路由
 @app.route('/join_group', methods=['POST'])
+@jwt_required()
 def join_group_route():
+    username = get_jwt_identity()
     data = request.get_json()
-    username = data.get('username')
     groupname = data.get('groupname')
     if not username or not groupname:
         return jsonify({'error': 'Missing username or groupname'}), 400
@@ -190,9 +171,10 @@ def join_group_route():
 
 # 离开组的路由
 @app.route('/leave_group', methods=['POST'])
+@jwt_required()
 def leave_group_route():
+    username = get_jwt_identity()
     data = request.get_json()
-    username = data.get('username')
     groupname = data.get('groupname')
     if not username or not groupname:
         return jsonify({'error': 'Missing username or groupname'}), 400

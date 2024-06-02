@@ -165,13 +165,13 @@ def user_search(filename, username):
             )
         ).all()
 
-        accessible_files = [file for file in all_potential_files if check_permission(file, user)]
+        accessible_files = [file for file in all_potential_files if check_permission(user, file)]
 
         results = []
         for file in accessible_files[:5]:  # 只处理前五个结果
-            ipfs_file_key = rsa_private_key_decryption(file.encrypted_key, server_prikey, is_plain=False)
+            ipfs_file_key = rsa_private_key_decryption(server_prikey, file.encrypted_key, is_plain=False)
             user_pubkey = user.public_key
-            ipfs_file_encrypted_key2 = rsa_public_key_encryption(ipfs_file_key, user_pubkey, is_plain=True)
+            ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key,  is_plain=True)
 
             results.append({
                 'cid': file.cid,

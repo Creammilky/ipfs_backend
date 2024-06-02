@@ -1,3 +1,5 @@
+import base64
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
@@ -35,11 +37,11 @@ def generate_keys_and_save(file_path):
 
 # RSA PUBLIC KEY ENCRYPTION
 def rsa_public_key_encryption(public_key_path, plaintext, is_plain=False):
-    if isinstance(plaintext, type(str)):
-        plaintext = plaintext.encode()
+    plaintext = base64.b64decode(plaintext)
+
     if is_plain is True:
         public_key = serialization.load_pem_public_key(
-            public_key_path,
+            public_key_path.encode('utf-8'),
             backend=default_backend()
         )
     else:
@@ -56,11 +58,13 @@ def rsa_public_key_encryption(public_key_path, plaintext, is_plain=False):
             label=None
         )
     )
-    return ciphertext
+    ciphertext_base64 = base64.b64encode(ciphertext).decode('utf-8')
+    return ciphertext_base64
 
 
 # RSA PRIVATE KEY DECRYPTION
 def rsa_private_key_decryption(private_key_path, ciphertext, is_plain=False):
+    ciphertext = base64.b64decode(ciphertext)
     if is_plain is True:
         private_key = serialization.load_pem_private_key(
             private_key_path,
@@ -82,7 +86,8 @@ def rsa_private_key_decryption(private_key_path, ciphertext, is_plain=False):
             label=None
         )
     )
-    return plaintext
+    plaintext_base64 = base64.b64encode(plaintext).decode('utf-8')
+    return plaintext_base64
 
 
 def aes_encrypt_file(key_str, file_path):
