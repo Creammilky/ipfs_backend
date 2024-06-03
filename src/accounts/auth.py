@@ -61,16 +61,22 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-
+#-------------------用户组相关操作------------------------
 def create_group(groupname, username):
     try:
-        user_id = User.query.filter_by(username=username).first().id
-        new_group = Group(name=groupname, owner_id=user_id)
+        # Fetch the user by username
+        user = User.query.filter_by(username=username).first()
+        if user is None:
+            raise ValueError("User not found")
+        # Create a new group with the fetched user as the owner
+        new_group = Group(name=groupname, owner_id=user.id)
         db.session.add(new_group)
+        user.groups.append(new_group)
         db.session.commit()
     except SQLAlchemyError as e:
         db.session.rollback()
-        raise  # 或者根据需要处理异常
+        raise
+
 
 # 加入组
 def join_group(username, groupname):
@@ -100,7 +106,61 @@ def leave_group(username, groupname):
         db.session.rollback()
         raise  # 或者根据需要处理异常
 
+def search_user_group(username):
+    try:
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            raise ValueError("No user found with the provided username.")
 
+        # Access the groups the user belongs to
+        groups = user.groups
+        return [group.name for group in groups]  # Return a list of group names
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        raise  # Re-raise the exception for further handling or logging
+
+
+def search_group_info(username, groupname):
+    try:
+        # Get user and group information
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return "User not found", []
+        group = Group.query.filter_by(name=groupname).first()
+        if not group:
+            return "Group not found", []
+
+        # Get group users
+        group_users = [member.username for member in group.members]
+
+        # Get IPFS files for the group
+        group_files = []
+        files = IPFSFile.query.filter_by(access_type='group').all()
+
+        for file in files:
+            if group.id in file.access_ids:
+                # Decrypt the file key with the server's private key
+                server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
+                ipfs_file_key = rsa_private_key_decryption(server_prikey, file.encrypted_key, is_plain=False)
+
+                # Encrypt the file key with the user's public key
+                user_pubkey = user.public_key
+                ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key, is_plain=True)
+
+                group_files.append({
+                    'cid': file.cid,
+                    'filename': file.filename,
+                    'description': file.description,
+                    'data_key': ipfs_file_encrypted_key2
+                })
+
+        return group_users, group_files
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        raise
+
+# --------------文件相关操作-------------------------
 def upload_file_to_ipfs(username, cid, filename, description, access_type=None, access_ids=None, encrypted_key=None):
     try:
         user = User.query.filter_by(username=username).first()
@@ -152,6 +212,9 @@ def check_permission(user, ipfs_file):
 
 def user_search(filename, username):
     server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
+    server_pubkey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\public_key.pem'
+    client_pubkey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\client_pubkey.pem'
+    client_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\client_prikey.pem'
     try:
         # 查询用户是否存在
         user = User.query.filter_by(username=username).first()
@@ -170,8 +233,15 @@ def user_search(filename, username):
         results = []
         for file in accessible_files[:5]:  # 只处理前五个结果
             ipfs_file_key = rsa_private_key_decryption(server_prikey, file.encrypted_key, is_plain=False)
+            #print(ipfs_file_key)
+
             user_pubkey = user.public_key
-            ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key,  is_plain=True)
+            #ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key,  is_plain=True)
+            ipfs_file_encrypted_key2 = rsa_public_key_encryption(client_pubkey, ipfs_file_key, is_plain=False)
+            print(ipfs_file_encrypted_key2)
+            #
+            #test_decrypt=rsa_private_key_decryption(client_prikey,ipfs_file_encrypted_key2, is_plain=False)
+
 
             results.append({
                 'cid': file.cid,

@@ -1,12 +1,12 @@
 from datetime import timedelta
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 from accounts.config import Config
 from accounts.user import db, User
 from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
-    leave_group, user_search
+    leave_group, user_search, search_user_group, search_group_info
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here___'
@@ -64,9 +64,13 @@ def sign_in_client():
     user = User.query.filter_by(username=username).first()
     if user and user.check_password(password):
         access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token), 200
+        response = make_response(jsonify(access_token=access_token), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
     else:
-        return jsonify({'message': 'Invalid credentials'}), 401
+        response = make_response(jsonify({'message': 'Invalid credentials'}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 @app.route('/logout', methods=['POST'])
 @jwt_required()
@@ -186,6 +190,41 @@ def leave_group_route():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# 请求所在组列表
+@app.route('/user_group', methods=['POST'])
+@jwt_required()
+def user_group_route():
+    username = get_jwt_identity()
+    try:
+        group_names = search_user_group(username)
+        return jsonify({'groups': group_names}), 200  # Return the list of groups as JSON
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# 特定组成员 以及 所上传的文件
+@app.route('/group_info', methods=['POST'])
+@jwt_required()
+def group_info_route():
+    username = get_jwt_identity()
+    data = request.get_json()
+    groupname = data.get('groupname')
+    if not groupname:
+        return jsonify({'error': 'Group name is required'}), 400
+
+    try:
+        group_users, group_files = search_group_info(username, groupname)
+        return jsonify({
+            'group_users': group_users,
+            'group_files': group_files
+        }), 200
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0',port=5008)
