@@ -164,7 +164,6 @@ def search_group_info(username, groupname):
 def upload_file_to_ipfs(username, cid, filename, description, access_type=None, access_ids=None, encrypted_key=None):
     try:
         user = User.query.filter_by(username=username).first()
-        # print(access_ids)
         new_file = IPFSFile(
             uploader_id=user.id,
             cid=cid,
@@ -213,7 +212,6 @@ def check_permission(user, ipfs_file):
 
 def user_search(filename, username):
     server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
-    client_pubkey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\client_pubkey.pem'
 
     try:
         # 查询用户是否存在
@@ -237,10 +235,6 @@ def user_search(filename, username):
 
             user_pubkey = user.public_key
             ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key,  is_plain=True)
-
-            #test_decrypt=rsa_private_key_decryption(client_prikey,ipfs_file_encrypted_key2, is_plain=False)
-            #rsa_private_key_decryption(client_prikey,ipfs_file_encrypted_key2, is_plain=False)
-
 
             results.append({
                 'cid': file.cid,

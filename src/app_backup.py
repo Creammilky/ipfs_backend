@@ -6,7 +6,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from accounts.config import Config
 from accounts.user import db, User
-from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
+from accounts.operate import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
     leave_group, user_search
 
 app = Flask(__name__)

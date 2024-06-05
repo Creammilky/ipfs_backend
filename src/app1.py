@@ -5,7 +5,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 
 from accounts.config import Config
 from accounts.user import db, User
-from accounts.auth import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
+from accounts.operate import auth_blueprint, upload_file_to_ipfs, download_file_from_ipfs, create_group, join_group, \
     leave_group, user_search, search_user_group, search_group_info
 
 app = Flask(__name__)
