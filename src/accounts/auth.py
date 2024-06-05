@@ -138,7 +138,7 @@ def search_group_info(username, groupname):
         files = IPFSFile.query.filter_by(access_type='group').all()
 
         for file in files:
-            if group.id in file.access_ids:
+            if group.name in file.access_ids:
                 # Decrypt the file key with the server's private key
                 server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
                 ipfs_file_key = rsa_private_key_decryption(server_prikey, file.encrypted_key, is_plain=False)
@@ -164,7 +164,7 @@ def search_group_info(username, groupname):
 def upload_file_to_ipfs(username, cid, filename, description, access_type=None, access_ids=None, encrypted_key=None):
     try:
         user = User.query.filter_by(username=username).first()
-        print(access_ids)
+        # print(access_ids)
         new_file = IPFSFile(
             uploader_id=user.id,
             cid=cid,
@@ -193,14 +193,15 @@ def check_permission(user, ipfs_file):
     if ipfs_file.access_type == 'user':
         # 如果权限类型是'user'，检查用户 ID 是否在列表中
         # 同时需要处理access_ids为空的情况
-        return access_ids is None or user.id in access_ids
+        return access_ids is None or user.name in access_ids
     elif ipfs_file.access_type == 'group':
         # 如果权限类型是'group'，检查用户是否属于列表中的任何一个组
         # 同样需要处理access_ids为空的情况
         if access_ids is None:
             return False  # 根据业务逻辑，这里可能是False或True
-        for group_id in access_ids:
-            group = Group.query.get(group_id)
+        for group_name in access_ids:
+            group = Group.query.filter_by(name=group_name).first()
+            # group = Group.query.get(group_id)
             if group and user in group.members:
                 return True
         return False
@@ -212,9 +213,8 @@ def check_permission(user, ipfs_file):
 
 def user_search(filename, username):
     server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
-    server_pubkey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\public_key.pem'
     client_pubkey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\client_pubkey.pem'
-    client_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\client_prikey.pem'
+
     try:
         # 查询用户是否存在
         user = User.query.filter_by(username=username).first()
@@ -236,11 +236,10 @@ def user_search(filename, username):
             #print(ipfs_file_key)
 
             user_pubkey = user.public_key
-            #ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key,  is_plain=True)
-            ipfs_file_encrypted_key2 = rsa_public_key_encryption(client_pubkey, ipfs_file_key, is_plain=False)
-            print(ipfs_file_encrypted_key2)
-            #
+            ipfs_file_encrypted_key2 = rsa_public_key_encryption(user_pubkey, ipfs_file_key,  is_plain=True)
+
             #test_decrypt=rsa_private_key_decryption(client_prikey,ipfs_file_encrypted_key2, is_plain=False)
+            #rsa_private_key_decryption(client_prikey,ipfs_file_encrypted_key2, is_plain=False)
 
 
             results.append({
@@ -249,6 +248,7 @@ def user_search(filename, username):
                 'description': file.description,
                 'data_key': ipfs_file_encrypted_key2
             })
+            #print(results[-1].get('data_key') + '\n' + user_pubkey)
 
         return results, 200
     except Exception as e:

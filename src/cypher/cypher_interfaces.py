@@ -41,7 +41,8 @@ def rsa_public_key_encryption(public_key_path, plaintext, is_plain=False):
 
     if is_plain is True:
         public_key = serialization.load_pem_public_key(
-            public_key_path.encode('utf-8'),
+            # Todo: .encode('utf-8')
+            public_key_path.encode(),
             backend=default_backend()
         )
     else:

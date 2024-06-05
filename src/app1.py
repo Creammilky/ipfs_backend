@@ -80,11 +80,11 @@ def logout():
 @app.route('/upload-file', methods=['POST'])
 @jwt_required()
 def upload_file():
+    username = get_jwt_identity()
     # 从请求中获取 JSON 数据
     data = request.json
 
     # 提取 JSON 数据中的参数
-    username = data.get('username')
     cid = data.get('cid')
     filename = data.get('filename')
     description = data.get('description')
@@ -106,9 +106,9 @@ def upload_file():
 @app.route('/search-files', methods=['POST'])
 @jwt_required()
 def search_files():
+    username = get_jwt_identity()
     data = request.get_json()
     filename = data.get('filename')
-    username = data.get('username')
 
     try:
         results, response = user_search(filename, username)
@@ -209,7 +209,7 @@ def user_group_route():
 def group_info_route():
     username = get_jwt_identity()
     data = request.get_json()
-    groupname = data.get('groupname')
+    groupname = data.get('groupName')
     if not groupname:
         return jsonify({'error': 'Group name is required'}), 400
 
