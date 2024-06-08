@@ -96,9 +96,11 @@ def upload_file():
     try:
         exception, response = upload_file_to_ipfs(username, cid, filename, description, access_type, access_ids, encrypted_key)
     except Exception as e:
-        return jsonify({'message': 'File uploaded failed'}), 401
+        print('File uploaded failed by' + e)
+        return jsonify({'message': 'File uploaded failed by' + e}), 401
 
     if response != 200:
+        print('File uploaded failed by' + exception)
         return jsonify({'message': f'File uploaded failed caused by {exception}'}), response
     else:
         return jsonify({'message': 'File uploaded successfully'}), response
@@ -227,4 +229,4 @@ def group_info_route():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0',port=5008)
+    app.run(debug=True, host='0.0.0.0', port=5008)

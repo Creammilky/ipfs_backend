@@ -7,7 +7,7 @@ import traceback
 from .user import User, db, Group, IPFSFile
 from werkzeug.security import check_password_hash
 
-from src.cypher.cypher_interfaces import *
+from cypher.cypher_interfaces import *
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -140,7 +140,7 @@ def search_group_info(username, groupname):
         for file in files:
             if group.name in file.access_ids:
                 # Decrypt the file key with the server's private key
-                server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
+                server_prikey = '../pem/private_key.pem'
                 ipfs_file_key = rsa_private_key_decryption(server_prikey, file.encrypted_key, is_plain=False)
 
                 # Encrypt the file key with the user's public key
@@ -211,7 +211,8 @@ def check_permission(user, ipfs_file):
 
 
 def user_search(filename, username):
-    server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
+    # todo 改成配置文件
+    server_prikey = '../pem/private_key.pem'
 
     try:
         # 查询用户是否存在
@@ -252,7 +253,7 @@ def user_search(filename, username):
 
 def download_file_from_ipfs(username, cid):
     # 获取用户实例
-    server_prikey = 'C:\\Users\\YaoJia\\Desktop\\安全编程技术\\ipfs_backend\\pem\\private_key.pem'
+    server_prikey = '../pem/private_key.pem'
     user = User.query.filter_by(username=username).first()
     if not user:
         return (None, 404)  # 用户不存在
